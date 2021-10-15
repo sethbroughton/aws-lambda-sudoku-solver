@@ -1,21 +1,39 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from '@aws-cdk/core';
-import { ServerlessSudokuSolverStack } from '../lib/serverless-sudoku-solver-stack';
+import * as path from 'path';
+import { NodejsFunction } from '@aws-cdk/aws-lambda-nodejs';
+import { HttpApi, HttpMethod } from '@aws-cdk/aws-apigatewayv2';
+import { LambdaProxyIntegration } from '@aws-cdk/aws-apigatewayv2-integrations';
+
+export class ServerlessSudokuSolverStack extends cdk.Stack {
+  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+    super(scope, id, props);
+
+    const solver = new NodejsFunction(this, 'Solver', {
+      entry: path.join(__dirname, 'solver.ts'),
+      timeout: cdk.Duration.seconds(5),
+      memorySize: 1024
+    });
+
+    const solverLambdaIntegration = new LambdaProxyIntegration({
+      handler: solver,
+    });
+
+    const api = new HttpApi(this, 'solver-api');
+    api.addRoutes({
+      path: '/solve',
+      methods: [ HttpMethod.POST, HttpMethod.GET ],
+      integration: solverLambdaIntegration
+    })
+
+    new cdk.CfnOutput(this, "api-endpoint", {
+      value: api.apiEndpoint,
+      exportName: "api-endpoint"
+    })
+
+  }
+}
 
 const app = new cdk.App();
-new ServerlessSudokuSolverStack(app, 'ServerlessSudokuSolverStack', {
-  /* If you don't specify 'env', this stack will be environment-agnostic.
-   * Account/Region-dependent features and context lookups will not work,
-   * but a single synthesized template can be deployed anywhere. */
-
-  /* Uncomment the next line to specialize this stack for the AWS Account
-   * and Region that are implied by the current CLI configuration. */
-  // env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
-
-  /* Uncomment the next line if you know exactly what Account and Region you
-   * want to deploy the stack to. */
-  // env: { account: '123456789012', region: 'us-east-1' },
-
-  /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
-});
+new ServerlessSudokuSolverStack(app, 'ServerlessSudokuSolverStack');
