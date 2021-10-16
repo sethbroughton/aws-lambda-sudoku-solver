@@ -1,4 +1,4 @@
-import * as AWS from 'aws-sdk';
+
 
 let solution: Array<Array<number>>;
 export async function handler(event: any) {
@@ -6,12 +6,16 @@ export async function handler(event: any) {
 
     const body = JSON.parse(event.body) 
     let { board } = body;
-    console.log(board);
+    console.log(`input board: ${board}`)
 
     solveSudoku(board);
 
-    console.log(solution);
-
+    const response = {
+        statusCode: 200, 
+        body: JSON.stringify(solution)
+    };
+    
+    return response;
 }
 
 const checkGuess = (num: number, row: number, col: number, board: Array<Array<number>>) => {
