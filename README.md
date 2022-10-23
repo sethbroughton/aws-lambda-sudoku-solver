@@ -1,4 +1,4 @@
-# Sudoku Solver in Lambda!
+# Sudoku Solver using AWS Lambda!
 
 Want to try it out? <br>
 
